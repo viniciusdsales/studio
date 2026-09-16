@@ -240,6 +240,36 @@ export function adminEmailField< T extends { adminEmail: string } >(): Field< T 
 	};
 }
 
+export function fromGitField< T extends { fromGit: string } >(): Field< T > {
+	return {
+		id: 'fromGit',
+		type: 'text',
+		label: __( 'Git repository URL' ),
+		description: __(
+			'Cloned into the site directory before creation. You may be prompted for Git credentials.'
+		),
+	};
+}
+
+export function sqlImportPathField< T extends { sqlImportPath: string } >(): Field< T > {
+	return {
+		id: 'sqlImportPath',
+		type: 'text',
+		label: __( '.sql file to import' ),
+	};
+}
+
+export function remoteUploadsUrlField< T extends { remoteUploadsUrl: string } >(): Field< T > {
+	return {
+		id: 'remoteUploadsUrl',
+		type: 'text',
+		label: __( 'Production URL for missing uploads' ),
+		description: __(
+			'Files missing under wp-content/uploads are redirected here instead of failing.'
+		),
+	};
+}
+
 // Builds the "use custom domain" boolean field. Named `customDomainToggleField`
 // (not `useCustomDomainField`) so the react-hooks/rules-of-hooks rule doesn't
 // flag it as a hook.

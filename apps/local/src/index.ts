@@ -858,6 +858,9 @@ export async function startLocalServer( options: LocalServerOptions ): Promise< 
 					filePath?: string;
 					bundleUrl?: string;
 				};
+				fromGit?: string;
+				sqlImportPath?: string;
+				remoteUploadsUrl?: string;
 			};
 			if ( ! body.name || ! body.path ) {
 				res.status( 400 ).json( { error: 'name and path are required' } );
@@ -892,6 +895,9 @@ export async function startLocalServer( options: LocalServerOptions ): Promise< 
 					noStart: body.skipStart,
 					blueprint: body.blueprint?.blueprint,
 					originalBlueprintPath: blueprintFilePath,
+					fromGit: body.fromGit,
+					sqlImportPath: body.sqlImportPath,
+					remoteUploadsUrl: body.remoteUploadsUrl,
 				} );
 				cleanupCreateArgs = cleanup;
 				await new Promise< void >( ( resolve, reject ) => {

@@ -713,6 +713,12 @@ export interface CreateSiteParams {
 	// Telemetry hint for the `studio_site_created` Tracks event. `import`/`sync` are set by the
 	// onboarding flows that create a blank site before populating it.
 	flowType?: TracksSiteCreateFlowType;
+	// Git repository to clone into the site directory before creating the site.
+	fromGit?: string;
+	// Path to a .sql file imported after the server starts.
+	sqlImportPath?: string;
+	// Production URL used as a fallback for wp-content/uploads files missing locally.
+	remoteUploadsUrl?: string;
 }
 
 export interface ExtractedBlueprintBundle {

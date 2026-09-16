@@ -814,6 +814,9 @@ export async function createSite(
 		adminEmail?: string;
 		noStart?: boolean;
 		flowType?: TracksSiteCreateFlowType;
+		fromGit?: string;
+		sqlImportPath?: string;
+		remoteUploadsUrl?: string;
 	} = {}
 ): Promise< SiteDetails > {
 	const {
@@ -831,6 +834,9 @@ export async function createSite(
 		adminEmail,
 		noStart = false,
 		flowType,
+		fromGit,
+		sqlImportPath,
+		remoteUploadsUrl,
 	} = config;
 
 	const siteId = providedSiteId || crypto.randomUUID();
@@ -867,6 +873,9 @@ export async function createSite(
 				adminEmail,
 				noStart,
 				flowType,
+				fromGit,
+				sqlImportPath,
+				remoteUploadsUrl,
 			},
 			{ wpVersion, blueprint: blueprint?.blueprint }
 		);

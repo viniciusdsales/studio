@@ -34,6 +34,7 @@ export enum SiteCommandLoggerAction {
 	SET_WP_VERSION = 'setWpVersion',
 	VALIDATE = 'validate',
 	CREATE_DIRECTORY = 'createDirectory',
+	CLONE_REPOSITORY = 'cloneRepository',
 	INSTALL_SQLITE = 'installSqlite',
 	ASSIGN_PORT = 'assignPort',
 	SETUP_WORDPRESS = 'setupWordPress',

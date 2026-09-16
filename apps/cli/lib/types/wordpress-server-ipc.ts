@@ -48,6 +48,7 @@ export const serverConfigSchema = z.object( {
 	useExactMountLayout: z.boolean().optional(),
 	autoPrependFile: z.string().optional(),
 	openBasedirAllowList: z.array( z.string() ).optional(),
+	remoteUploadsUrl: z.string().optional(),
 } );
 
 export type ServerConfig = z.infer< typeof serverConfigSchema >;

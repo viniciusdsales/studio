@@ -176,7 +176,10 @@ describe( 'useAddSite', () => {
 			undefined, // adminEmail
 			undefined, // runtime
 			undefined, // fileAccess
-			undefined // flowType
+			undefined, // flowType
+			undefined, // fromGit
+			undefined, // sqlImportPath
+			undefined // remoteUploadsUrl
 		);
 	} );
 

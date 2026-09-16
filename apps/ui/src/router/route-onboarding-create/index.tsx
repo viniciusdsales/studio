@@ -318,6 +318,9 @@ export function CreateSitePage() {
 				adminUsername: values.adminUsername || undefined,
 				adminPassword: values.adminPassword || undefined,
 				adminEmail: values.adminEmail || undefined,
+				fromGit: values.fromGit,
+				sqlImportPath: values.sqlImportPath,
+				remoteUploadsUrl: values.remoteUploadsUrl,
 				...( brief ? { flowType: 'ai' as const } : {} ),
 				...( mergedBlueprint && blueprint
 					? {

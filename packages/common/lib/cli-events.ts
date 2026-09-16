@@ -38,6 +38,9 @@ export const siteDetailsSchema = z.object( {
 	technicalSiteDirectory: z.string().optional(),
 	runtimeBlueprintPath: z.string().optional(),
 	landingPage: z.string().optional(),
+	// Production URL used as a fallback for wp-content/uploads files missing locally
+	// (e.g. a client site cloned from Git without its media library).
+	remoteUploadsUrl: z.string().optional(),
 	// The in-flight Studio operation holding the site, if any. The UI disables
 	// the actions it blocks, so it stays correct even when the agent started it.
 	operation: siteOperationSchema.optional(),

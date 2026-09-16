@@ -387,6 +387,9 @@ export function createLocalConnector( { apiBaseUrl }: LocalConnectorOptions ): C
 					// The server writes this to a temp file and passes --blueprint to
 					// the CLI (featured blueprint JSON, or an uploaded bundle's filePath).
 					blueprint: params.blueprint,
+					fromGit: params.fromGit,
+					sqlImportPath: params.sqlImportPath,
+					remoteUploadsUrl: params.remoteUploadsUrl,
 				} ),
 			} );
 		},

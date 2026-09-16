@@ -1,3 +1,4 @@
+import { spawn } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -78,6 +79,8 @@ import {
 } from 'cli/lib/dependency-management/paths';
 import { updateServerFiles } from 'cli/lib/dependency-management/setup';
 import { downloadWordPress } from 'cli/lib/dependency-management/wordpress';
+import { DEFAULT_IMPORTER_OPTIONS, getImporter } from 'cli/lib/import-export/import/import-manager';
+import { getBackupFileType } from 'cli/lib/import-export/utils';
 import { copyLanguagePackToSite } from 'cli/lib/language-packs';
 import { validateSupportedPhpVersion } from 'cli/lib/php-versions';
 import {
@@ -151,7 +154,29 @@ export type CreateCommandOptions = {
 	skipBrowser: boolean;
 	skipLogDetails: boolean;
 	flowType?: TracksSiteCreateFlowType;
+	// Git repository to clone into the site directory before creating the site.
+	fromGit?: string;
+	// Path to a .sql file imported after the server starts.
+	sqlImportPath?: string;
+	// Production URL used as a fallback for wp-content/uploads files missing locally.
+	remoteUploadsUrl?: string;
 };
+
+// Lets git prompt for credentials on stdio (SSH passphrase, HTTPS credential helper, etc.)
+// exactly as it would from a manual `git clone`.
+function cloneGitRepository( repositoryUrl: string, destination: string ): Promise< void > {
+	return new Promise( ( resolve, reject ) => {
+		const child = spawn( 'git', [ 'clone', repositoryUrl, destination ], { stdio: 'inherit' } );
+		child.on( 'error', reject );
+		child.on( 'exit', ( code ) => {
+			if ( code === 0 ) {
+				resolve();
+			} else {
+				reject( new Error( sprintf( __( 'git clone exited with code %d' ), code ?? 1 ) ) );
+			}
+		} );
+	} );
+}
 
 const SITE_CREATE_FLOW_TYPES: readonly TracksSiteCreateFlowType[] = [
 	'new',
@@ -678,6 +703,18 @@ export async function runCommand(
 	const createStartedAt = Date.now();
 
 	try {
+		if ( options.fromGit ) {
+			const targetExists = await pathExists( sitePath );
+			if ( targetExists && ! ( await isEmptyDir( sitePath ) ) ) {
+				throw new LoggerError(
+					__( 'Cannot clone: the selected directory already has files in it.' )
+				);
+			}
+			logger.reportStart( LoggerAction.CLONE_REPOSITORY, __( 'Cloning repository…' ) );
+			await cloneGitRepository( options.fromGit, sitePath );
+			logger.reportSuccess( __( 'Repository cloned' ) );
+		}
+
 		logger.reportStart( LoggerAction.VALIDATE, __( 'Validating site configuration…' ) );
 
 		const pathExistsResult = await pathExists( sitePath );
@@ -895,6 +932,7 @@ export async function runCommand(
 			customDomain: options.customDomain,
 			enableHttps: options.enableHttps,
 			landingPage: normalizeLandingPage( blueprint?.landingPage ),
+			remoteUploadsUrl: options.remoteUploadsUrl,
 		};
 
 		logger.reportStart( LoggerAction.SAVE_SITE, __( 'Saving site…' ) );
@@ -938,6 +976,23 @@ export async function runCommand(
 				siteDetails.url = siteDetails.customDomain
 					? `${ siteDetails.enableHttps ? 'https' : 'http' }://${ siteDetails.customDomain }`
 					: `http://localhost:${ siteDetails.port }`;
+
+				if ( options.sqlImportPath ) {
+					logger.reportStart( LoggerAction.IMPORT_DATABASE, __( 'Importing SQL file…' ) );
+					try {
+						const importer = getImporter(
+							{
+								path: options.sqlImportPath,
+								type: getBackupFileType( options.sqlImportPath ),
+							},
+							DEFAULT_IMPORTER_OPTIONS
+						);
+						await importer.import( siteDetails );
+						logger.reportSuccess( __( 'SQL file imported' ) );
+					} catch ( error ) {
+						throw new LoggerError( __( 'Failed to import the SQL file' ), error );
+					}
+				}
 
 				if ( staticSiteImport ) {
 					importOutcome = 'attempted';
@@ -1181,6 +1236,24 @@ export const registerCommand = ( yargs: StudioArgv ) => {
 						return path.resolve( untildify( value ) );
 					},
 				} )
+				.option( 'from-git', {
+					type: 'string',
+					describe: __(
+						'Clone a Git repository into the site directory before creating the site (git prompts for credentials as needed)'
+					),
+					conflicts: [ 'blueprint', 'from' ],
+				} )
+				.option( 'sql', {
+					type: 'string',
+					describe: __( 'Path to a .sql file to import after the site is created' ),
+					coerce: ( value ) => path.resolve( untildify( value ) ),
+				} )
+				.option( 'remote-uploads-url', {
+					type: 'string',
+					describe: __(
+						'Production site URL to fall back to for files missing under wp-content/uploads'
+					),
+				} )
 				.option( 'static-site-importer-url', {
 					type: 'string',
 					describe: __( 'Static Site Importer plugin zip URL for --from imports' ),
@@ -1270,6 +1343,15 @@ export const registerCommand = ( yargs: StudioArgv ) => {
 			let adminUsername = argv.adminUsername;
 			let adminPassword = argv.adminPassword;
 			let adminEmail = argv.adminEmail;
+			const fromGit = argv.fromGit;
+			let sqlImportPath = argv.sql;
+			let remoteUploadsUrl = argv.remoteUploadsUrl;
+			if ( sqlImportPath && ! fs.existsSync( sqlImportPath ) ) {
+				defaultLogger.reportError(
+					new LoggerError( sprintf( __( 'SQL file not found: %s' ), sqlImportPath ) )
+				);
+				return;
+			}
 			const runtime = siteRuntimeFromMode( argv.runtime );
 			const fileAccess = argv.fileAccess;
 			if ( ! isFileAccessAllowedForRuntime( runtime, fileAccess ) ) {
@@ -1436,6 +1518,28 @@ export const registerCommand = ( yargs: StudioArgv ) => {
 							validate: ( value ) => validateAdminEmail( value ) || true,
 						} );
 					}
+
+					if ( fromGit ) {
+						if ( ! sqlImportPath ) {
+							const sqlAnswer = await input( {
+								message: __( 'Path to .sql file to import (leave empty to skip):' ),
+								validate: ( value ) =>
+									! value ||
+									fs.existsSync( path.resolve( untildify( value ) ) ) ||
+									__( 'File not found' ),
+							} );
+							sqlImportPath = sqlAnswer ? path.resolve( untildify( sqlAnswer ) ) : undefined;
+						}
+
+						if ( ! remoteUploadsUrl ) {
+							const remoteUploadsAnswer = await input( {
+								message: __(
+									'Production URL to fall back to for missing uploads (leave empty to skip):'
+								),
+							} );
+							remoteUploadsUrl = remoteUploadsAnswer || undefined;
+						}
+					}
 				}
 			} catch {
 				// User cancelled the prompt (Ctrl+C)
@@ -1461,6 +1565,9 @@ export const registerCommand = ( yargs: StudioArgv ) => {
 				skipBrowser: !! argv.skipBrowser,
 				skipLogDetails: !! argv.skipLogDetails,
 				flowType: parseFlowType( argv.flowType ),
+				fromGit,
+				sqlImportPath,
+				remoteUploadsUrl,
 			};
 
 			try {

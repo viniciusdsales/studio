@@ -124,6 +124,9 @@ export const CreateSiteForm = ( {
 		() => blueprintCredentials?.adminPassword ?? generatePassword()
 	);
 	const [ adminEmail, setAdminEmail ] = useState( 'admin@localhost.com' );
+	const [ fromGit, setFromGit ] = useState( '' );
+	const [ sqlImportPath, setSqlImportPath ] = useState( '' );
+	const [ remoteUploadsUrl, setRemoteUploadsUrl ] = useState( '' );
 
 	const [ pathError, setPathError ] = useState( '' );
 	const [ doesPathContainWordPress, setDoesPathContainWordPress ] = useState( false );
@@ -352,6 +355,9 @@ export const CreateSiteForm = ( {
 			adminUsername: adminUsername || undefined,
 			adminPassword: adminPassword || undefined,
 			adminEmail,
+			fromGit: fromGit || undefined,
+			sqlImportPath: sqlImportPath || undefined,
+			remoteUploadsUrl: remoteUploadsUrl || undefined,
 		} ),
 		[
 			siteName,
@@ -366,6 +372,9 @@ export const CreateSiteForm = ( {
 			adminUsername,
 			adminPassword,
 			adminEmail,
+			fromGit,
+			sqlImportPath,
+			remoteUploadsUrl,
 		]
 	);
 
@@ -729,6 +738,55 @@ export const CreateSiteForm = ( {
 									) }
 								</>
 							) }
+
+							<div className="flex flex-col gap-2 mt-4">
+								<span className="font-semibold">{ __( 'Migrate from Git (optional)' ) }</span>
+								<div className="flex flex-col gap-1.5 leading-4">
+									<label className="text-sm" htmlFor="from-git">
+										{ __( 'Git repository URL' ) }
+									</label>
+									<TextControlComponent
+										id="from-git"
+										value={ fromGit }
+										onChange={ setFromGit }
+										placeholder="git@example.com:acme/site.git"
+									/>
+									<span className="text-frame-text-secondary text-xs">
+										{ __(
+											'Cloned into the site directory before creation. You may be prompted for Git credentials.'
+										) }
+									</span>
+								</div>
+
+								<div className="flex flex-col gap-1.5 leading-4 mt-2">
+									<label className="text-sm" htmlFor="sql-import-path">
+										{ __( '.sql file to import' ) }
+									</label>
+									<TextControlComponent
+										id="sql-import-path"
+										value={ sqlImportPath }
+										onChange={ setSqlImportPath }
+										placeholder="/path/to/dump.sql"
+									/>
+								</div>
+
+								<div className="flex flex-col gap-1.5 leading-4 mt-2">
+									<label className="text-sm" htmlFor="remote-uploads-url">
+										{ __( 'Production URL for missing uploads' ) }
+									</label>
+									<TextControlComponent
+										id="remote-uploads-url"
+										value={ remoteUploadsUrl }
+										onChange={ setRemoteUploadsUrl }
+										placeholder="https://cliente.com.br"
+									/>
+									<span className="text-frame-text-secondary text-xs">
+										{ __(
+											'Files missing under wp-content/uploads are redirected here instead of failing.'
+										) }
+									</span>
+								</div>
+							</div>
 						</div>
 					</>
 				) }

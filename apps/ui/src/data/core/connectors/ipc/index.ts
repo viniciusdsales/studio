@@ -291,6 +291,9 @@ export function createIpcConnector(): Connector {
 				skipStart,
 				blueprint,
 				flowType,
+				fromGit,
+				sqlImportPath,
+				remoteUploadsUrl,
 			} = params;
 			return ( await ipcApi.createSite( path, {
 				siteName: name,
@@ -311,6 +314,9 @@ export function createIpcConnector(): Connector {
 					  }
 					: undefined,
 				flowType,
+				fromGit,
+				sqlImportPath,
+				remoteUploadsUrl,
 			} ) ) as SiteDetails;
 		},
 

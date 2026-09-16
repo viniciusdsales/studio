@@ -42,7 +42,10 @@ interface SiteDetailsContext {
 		adminEmail?: string,
 		runtime?: SiteRuntime,
 		fileAccess?: SiteFileAccess,
-		flowType?: TracksSiteCreateFlowType
+		flowType?: TracksSiteCreateFlowType,
+		fromGit?: string,
+		sqlImportPath?: string,
+		remoteUploadsUrl?: string
 	) => Promise< SiteDetails | void >;
 	copySite: ( sourceSiteId: string ) => Promise< SiteDetails | void >;
 	startServer: (
@@ -319,7 +322,10 @@ export function SiteDetailsProvider( { children }: SiteDetailsProviderProps ) {
 			adminEmail?: string,
 			runtime?: SiteRuntime,
 			fileAccess?: SiteFileAccess,
-			flowType?: TracksSiteCreateFlowType
+			flowType?: TracksSiteCreateFlowType,
+			fromGit?: string,
+			sqlImportPath?: string,
+			remoteUploadsUrl?: string
 		) => {
 			// Function to handle error messages and cleanup
 			const showError = ( error?: unknown, hasBlueprint?: boolean ) => {
@@ -400,6 +406,9 @@ export function SiteDetailsProvider( { children }: SiteDetailsProviderProps ) {
 					adminEmail,
 					noStart,
 					flowType,
+					fromGit,
+					sqlImportPath,
+					remoteUploadsUrl,
 				} );
 				if ( ! newSite ) {
 					showError( undefined, !! blueprint );

@@ -623,6 +623,7 @@ async function doStartServer(
 					STUDIO_PHPMYADMIN_PATH: getPhpMyAdminPath(),
 					STUDIO_NATIVE_PHPMYADMIN_WP_ENV_PATH: phpMyAdminWpEnvPath,
 					STUDIO_PHPMYADMIN_SESSION_PATH: getPhpMyAdminSessionPath( config ),
+					STUDIO_REMOTE_UPLOADS_URL: config.remoteUploadsUrl ?? '',
 				},
 				onlyPathsThatPhpCanAccess: openBasedirAllowlist,
 				disallowRiskyFunctions: isFileAccessRestricted( config ),

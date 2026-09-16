@@ -20,8 +20,11 @@ import {
 	adminPasswordField,
 	adminUsernameField,
 	customDomainField,
+	fromGitField,
 	phpVersionField,
+	remoteUploadsUrlField,
 	siteNameField,
+	sqlImportPathField,
 	customDomainToggleField,
 	wpVersionField,
 } from '@/components/site-fields';
@@ -52,6 +55,9 @@ export interface CreateSiteFormValues {
 	adminUsername: string;
 	adminPassword: string;
 	adminEmail: string;
+	fromGit?: string;
+	sqlImportPath?: string;
+	remoteUploadsUrl?: string;
 }
 
 export interface CreateSiteFormError {
@@ -93,6 +99,9 @@ interface FormData {
 	adminUsername: string;
 	adminPassword: string;
 	adminEmail: string;
+	fromGit: string;
+	sqlImportPath: string;
+	remoteUploadsUrl: string;
 }
 
 const SIMPLE_FIELDS = [
@@ -103,6 +112,9 @@ const SIMPLE_FIELDS = [
 	'adminUsername',
 	'adminPassword',
 	'adminEmail',
+	'fromGit',
+	'sqlImportPath',
+	'remoteUploadsUrl',
 ] as const satisfies readonly ( keyof CreateSiteFormValues )[];
 const INITIAL_VALUE_FIELDS = [ ...SIMPLE_FIELDS, 'path', 'customDomain' ] as const;
 
@@ -121,6 +133,9 @@ function createDefaultFormData(): FormData {
 		adminUsername: DEFAULT_ADMIN_USERNAME,
 		adminPassword: generatePassword(),
 		adminEmail: DEFAULT_ADMIN_EMAIL,
+		fromGit: '',
+		sqlImportPath: '',
+		remoteUploadsUrl: '',
 	};
 }
 
@@ -160,6 +175,9 @@ function applyInitialValues(
 		adminUsername: { adminUsername: defaults.adminUsername },
 		adminPassword: { adminPassword: defaults.adminPassword },
 		adminEmail: { adminEmail: defaults.adminEmail },
+		fromGit: { fromGit: defaults.fromGit },
+		sqlImportPath: { sqlImportPath: defaults.sqlImportPath },
+		remoteUploadsUrl: { remoteUploadsUrl: defaults.remoteUploadsUrl },
 	};
 	for ( const field of previousSuggestedFields ) {
 		if ( values[ field ] !== undefined || dirtyFields.has( field ) ) continue;
@@ -492,6 +510,9 @@ export function CreateSiteForm( {
 				isVisible: ( item: FormData ) => item.useCustomDomain,
 				Edit: EnableHttpsControl,
 			},
+			fromGitField< FormData >(),
+			sqlImportPathField< FormData >(),
+			remoteUploadsUrlField< FormData >(),
 		],
 		[ existingDomainNames, isOffline, wpVersions ]
 	);
@@ -533,6 +554,12 @@ export function CreateSiteForm( {
 					label: __( 'Domain' ),
 					layout: { type: 'card', withHeader: true, isCollapsible: false },
 					children: [ 'useCustomDomain', 'customDomain', 'enableHttps' ],
+				},
+				{
+					id: 'migration',
+					label: __( 'Migrate from Git (optional)' ),
+					layout: { type: 'card', withHeader: true, isCollapsible: false },
+					children: [ 'fromGit', 'sqlImportPath', 'remoteUploadsUrl' ],
 				},
 			],
 		} ),
@@ -617,6 +644,9 @@ export function CreateSiteForm( {
 			adminUsername: data.adminUsername,
 			adminPassword: data.adminPassword,
 			adminEmail: data.adminEmail,
+			fromGit: data.fromGit || undefined,
+			sqlImportPath: data.sqlImportPath || undefined,
+			remoteUploadsUrl: data.remoteUploadsUrl || undefined,
 		} );
 	};
 

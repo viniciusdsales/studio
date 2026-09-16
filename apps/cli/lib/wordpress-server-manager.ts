@@ -140,6 +140,10 @@ function buildServerConfig(
 		serverConfig.absoluteUrl = `${ protocol }://${ site.customDomain }`;
 	}
 
+	if ( site.remoteUploadsUrl ) {
+		serverConfig.remoteUploadsUrl = site.remoteUploadsUrl;
+	}
+
 	if ( site.adminUsername ) {
 		serverConfig.adminUsername = site.adminUsername;
 	}

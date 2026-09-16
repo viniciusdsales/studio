@@ -1,3 +1,5 @@
+import { spawn } from 'child_process';
+import { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -38,6 +40,8 @@ import { removeSiteFromConfig } from 'cli/lib/cli-config/sites';
 import { connectToDaemon, disconnectFromDaemon } from 'cli/lib/daemon-client';
 import { updateServerFiles } from 'cli/lib/dependency-management/setup';
 import { downloadWordPress } from 'cli/lib/dependency-management/wordpress';
+import { getImporter } from 'cli/lib/import-export/import/import-manager';
+import { getBackupFileType } from 'cli/lib/import-export/utils';
 import { copyLanguagePackToSite } from 'cli/lib/language-packs';
 import { runWpCliCommandWithMessaging } from 'cli/lib/run-wp-cli-command';
 import { getPreferredSiteLanguage } from 'cli/lib/site-language';
@@ -80,6 +84,20 @@ vi.mock( 'cli/lib/cli-config/sites', async () => {
 		getSiteUrl: vi.fn().mockImplementation( ( site ) => `http://localhost:${ site.port }` ),
 	};
 } );
+vi.mock( 'child_process', () => {
+	const execFile = vi.fn( ( _command: string, _args: string[], callback?: () => void ) => {
+		callback?.();
+	} );
+	const spawn = vi.fn();
+	return { spawn, execFile, default: { spawn, execFile } };
+} );
+vi.mock( 'cli/lib/import-export/import/import-manager', () => ( {
+	getImporter: vi.fn(),
+	DEFAULT_IMPORTER_OPTIONS: [],
+} ) );
+vi.mock( 'cli/lib/import-export/utils', () => ( {
+	getBackupFileType: vi.fn().mockReturnValue( 'application/sql' ),
+} ) );
 vi.mock( 'cli/lib/language-packs' );
 vi.mock( 'cli/lib/daemon-client' );
 vi.mock( 'cli/lib/dependency-management/setup' );
@@ -164,6 +182,16 @@ describe( 'CLI: studio create', () => {
 	let consoleLogSpy: MockInstance;
 	let fsMkdirSyncSpy: MockInstance;
 	let loggerReportSuccessSpy: MockInstance;
+
+	// Emits `exit` on a microtask so it fires after cloneGitRepository() attaches its listeners.
+	const mockGitClone = ( exitCode: number | null = 0 ) => {
+		const child = new EventEmitter();
+		vi.mocked( spawn ).mockImplementation( () => {
+			queueMicrotask( () => child.emit( 'exit', exitCode ) );
+			return child as never;
+		} );
+		return child;
+	};
 
 	const createPathExistsMock = ( sitePathExists = false ) => {
 		const path = require( 'path' );
@@ -1029,6 +1057,122 @@ describe( 'CLI: studio create', () => {
 			expect( recursiveCopyDirectory ).toHaveBeenCalledWith(
 				path.join( path.sep, 'test', 'server-files', 'wordpress-versions', '6.4' ),
 				mockSitePath
+			);
+		} );
+	} );
+
+	describe( 'Git Clone Handling', () => {
+		it( 'clones the repository into the site directory before validating it', async () => {
+			mockGitClone( 0 );
+
+			await runCommand( mockSitePath, {
+				...defaultTestOptions,
+				fromGit: 'git@example.com:acme/site.git',
+			} );
+
+			expect( spawn ).toHaveBeenCalledWith(
+				'git',
+				[ 'clone', 'git@example.com:acme/site.git', mockSitePath ],
+				{ stdio: 'inherit' }
+			);
+			expect( saveCliConfig ).toHaveBeenCalled();
+		} );
+
+		it( 'rejects when git exits with a non-zero code', async () => {
+			mockGitClone( 1 );
+
+			await expect(
+				runCommand( mockSitePath, {
+					...defaultTestOptions,
+					fromGit: 'git@example.com:acme/site.git',
+				} )
+			).rejects.toThrow( 'git clone exited with code 1' );
+			expect( saveCliConfig ).not.toHaveBeenCalled();
+		} );
+
+		it( 'refuses to clone into a directory that already has files', async () => {
+			vi.mocked( pathExists ).mockResolvedValue( true );
+			vi.mocked( isEmptyDir ).mockResolvedValue( false );
+			vi.mocked( isWordPressDirectory ).mockReturnValue( false );
+
+			await expect(
+				runCommand( mockSitePath, {
+					...defaultTestOptions,
+					fromGit: 'git@example.com:acme/site.git',
+				} )
+			).rejects.toThrow( 'Cannot clone: the selected directory already has files in it.' );
+			expect( spawn ).not.toHaveBeenCalled();
+		} );
+
+		it( 'rejects --from-git together with --blueprint', () => {
+			const parser = registerCommand(
+				yargs( [] ).option( 'path', { type: 'string', default: mockSitePath } )
+			).exitProcess( false );
+
+			expect( () =>
+				parser.parse( [
+					'create',
+					'--from-git',
+					'git@example.com:acme/site.git',
+					'--blueprint',
+					'/tmp/blueprint.json',
+				] )
+			).toThrow( 'mutually exclusive' );
+		} );
+	} );
+
+	describe( 'SQL Import Handling', () => {
+		it( 'imports the provided SQL file once the server has started', async () => {
+			const mockImport = vi.fn().mockResolvedValue( {} );
+			vi.mocked( getImporter ).mockReturnValue( { import: mockImport } as never );
+
+			await runCommand( mockSitePath, {
+				...defaultTestOptions,
+				sqlImportPath: '/tmp/dump.sql',
+			} );
+
+			expect( getBackupFileType ).toHaveBeenCalledWith( '/tmp/dump.sql' );
+			expect( getImporter ).toHaveBeenCalledWith(
+				{ path: '/tmp/dump.sql', type: 'application/sql' },
+				[]
+			);
+			expect( mockImport ).toHaveBeenCalledWith(
+				expect.objectContaining( { path: mockSitePath, running: true } )
+			);
+		} );
+
+		it( 'does not attempt an import when no SQL path is provided', async () => {
+			await runCommand( mockSitePath, { ...defaultTestOptions } );
+
+			expect( getImporter ).not.toHaveBeenCalled();
+		} );
+
+		it( 'wraps SQL import failures in a LoggerError', async () => {
+			const mockImport = vi.fn().mockRejectedValue( new Error( 'bad dump' ) );
+			vi.mocked( getImporter ).mockReturnValue( { import: mockImport } as never );
+
+			await expect(
+				runCommand( mockSitePath, {
+					...defaultTestOptions,
+					sqlImportPath: '/tmp/dump.sql',
+				} )
+			).rejects.toThrow( 'Failed to import the SQL file' );
+		} );
+	} );
+
+	describe( 'Remote Uploads Handling', () => {
+		it( 'persists the remote uploads URL on the created site', async () => {
+			await runCommand( mockSitePath, {
+				...defaultTestOptions,
+				remoteUploadsUrl: 'https://cliente.com.br',
+			} );
+
+			expect( saveCliConfig ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					sites: expect.arrayContaining( [
+						expect.objectContaining( { remoteUploadsUrl: 'https://cliente.com.br' } ),
+					] ),
+				} )
 			);
 		} );
 	} );

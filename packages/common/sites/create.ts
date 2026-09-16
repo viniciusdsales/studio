@@ -30,6 +30,12 @@ export interface SiteCreateOptions {
 	// Telemetry hint for the `studio_site_created` Tracks event. Not a functional site option — the
 	// CLI infers `blueprint` on its own, so only import/sync/duplicate are threaded through here.
 	flowType?: TracksSiteCreateFlowType;
+	// Git repository to clone into the site directory before creating the site.
+	fromGit?: string;
+	// Path to a .sql file imported after the server starts.
+	sqlImportPath?: string;
+	// Production URL used as a fallback for wp-content/uploads files missing locally.
+	remoteUploadsUrl?: string;
 }
 
 /**
@@ -83,6 +89,15 @@ export function buildSiteCreateArgs( options: SiteCreateOptions ): {
 	}
 	if ( options.flowType ) {
 		args.push( '--flow-type', options.flowType );
+	}
+	if ( options.fromGit ) {
+		args.push( '--from-git', options.fromGit );
+	}
+	if ( options.sqlImportPath ) {
+		args.push( '--sql', options.sqlImportPath );
+	}
+	if ( options.remoteUploadsUrl ) {
+		args.push( '--remote-uploads-url', options.remoteUploadsUrl );
 	}
 
 	let blueprintTempPath: string | undefined;

@@ -41,6 +41,12 @@ export interface CreateSiteFormValues {
 	adminUsername?: string;
 	adminPassword?: string;
 	adminEmail?: string;
+	// Git repository to clone into the site directory before creating the site.
+	fromGit?: string;
+	// Path to a .sql file imported after the server starts.
+	sqlImportPath?: string;
+	// Production URL used as a fallback for wp-content/uploads files missing locally.
+	remoteUploadsUrl?: string;
 }
 
 export type { PathValidationResult } from '@studio/common/lib/site-path-validation';
@@ -241,7 +247,10 @@ export function useAddSite() {
 					formValues.adminEmail,
 					formValues.runtime,
 					formValues.fileAccess,
-					flowType
+					flowType,
+					formValues.fromGit,
+					formValues.sqlImportPath,
+					formValues.remoteUploadsUrl
 				);
 			} catch ( e ) {
 				Sentry.captureException( e );

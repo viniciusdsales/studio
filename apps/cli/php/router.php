@@ -21,6 +21,15 @@ $root = realpath( $_SERVER['DOCUMENT_ROOT'] ?? '' ) ?: getcwd();
 $path = urldecode( parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH ) );
 $file = $root . $path;
 
+// Client sites cloned from Git usually don't bring their media library. When a
+// production URL is configured, fall back to it for uploads missing locally instead
+// of a broken image, mirroring what agencies previously did with an nginx rewrite.
+$remote_uploads_url = getenv( 'STUDIO_REMOTE_UPLOADS_URL' ) ?: '';
+if ( $remote_uploads_url && str_starts_with( $path, '/wp-content/uploads/' ) && ! is_file( $file ) ) {
+	header( 'Location: ' . rtrim( $remote_uploads_url, '/' ) . $path, true, 302 );
+	return true;
+}
+
 // phpMyAdmin ships outside the site root, so map the public URL prefix to the
 // bundled directory explicitly instead of letting the built-in server resolve it.
 $phpmyadmin_prefix = '/phpmyadmin';
