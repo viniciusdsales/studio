@@ -24,7 +24,6 @@ import {
 	phpVersionField,
 	remoteUploadsUrlField,
 	siteNameField,
-	sqlImportPathField,
 	customDomainToggleField,
 	wpVersionField,
 } from '@/components/site-fields';
@@ -56,7 +55,7 @@ export interface CreateSiteFormValues {
 	adminPassword: string;
 	adminEmail: string;
 	fromGit?: string;
-	sqlImportPath?: string;
+	sqlImportFile?: File | null;
 	remoteUploadsUrl?: string;
 }
 
@@ -100,7 +99,7 @@ interface FormData {
 	adminPassword: string;
 	adminEmail: string;
 	fromGit: string;
-	sqlImportPath: string;
+	sqlImportFile: File | null;
 	remoteUploadsUrl: string;
 }
 
@@ -113,7 +112,7 @@ const SIMPLE_FIELDS = [
 	'adminPassword',
 	'adminEmail',
 	'fromGit',
-	'sqlImportPath',
+	'sqlImportFile',
 	'remoteUploadsUrl',
 ] as const satisfies readonly ( keyof CreateSiteFormValues )[];
 const INITIAL_VALUE_FIELDS = [ ...SIMPLE_FIELDS, 'path', 'customDomain' ] as const;
@@ -134,7 +133,7 @@ function createDefaultFormData(): FormData {
 		adminPassword: generatePassword(),
 		adminEmail: DEFAULT_ADMIN_EMAIL,
 		fromGit: '',
-		sqlImportPath: '',
+		sqlImportFile: null,
 		remoteUploadsUrl: '',
 	};
 }
@@ -176,7 +175,7 @@ function applyInitialValues(
 		adminPassword: { adminPassword: defaults.adminPassword },
 		adminEmail: { adminEmail: defaults.adminEmail },
 		fromGit: { fromGit: defaults.fromGit },
-		sqlImportPath: { sqlImportPath: defaults.sqlImportPath },
+		sqlImportFile: { sqlImportFile: defaults.sqlImportFile },
 		remoteUploadsUrl: { remoteUploadsUrl: defaults.remoteUploadsUrl },
 	};
 	for ( const field of previousSuggestedFields ) {
@@ -392,6 +391,26 @@ function EnableHttpsControl( { data: item, field, onChange }: DataFormControlPro
 	);
 }
 
+function SqlFileControl( { data: item, field, onChange }: DataFormControlProps< FormData > ) {
+	return (
+		<BaseControl __nextHasNoMarginBottom label={ field.label }>
+			<input
+				type="file"
+				aria-label={ field.label }
+				accept=".sql,application/sql"
+				onChange={ ( event ) => {
+					const file = event.target.files?.[ 0 ] ?? null;
+					if ( file && ! file.name.toLowerCase().endsWith( '.sql' ) ) return;
+					onChange( { sqlImportFile: file } );
+				} }
+			/>
+			{ item.sqlImportFile && (
+				<span className="components-base-control__help">{ item.sqlImportFile.name }</span>
+			) }
+		</BaseControl>
+	);
+}
+
 function countAdvancedErrors( validity: FormValidity, form: Form ): number {
 	const fieldIds: string[] = [];
 	const collect = ( field: FormField | string ) => {
@@ -511,7 +530,11 @@ export function CreateSiteForm( {
 				Edit: EnableHttpsControl,
 			},
 			fromGitField< FormData >(),
-			sqlImportPathField< FormData >(),
+			{
+				id: 'sqlImportFile',
+				label: __( '.sql file to import' ),
+				Edit: SqlFileControl,
+			},
 			remoteUploadsUrlField< FormData >(),
 		],
 		[ existingDomainNames, isOffline, wpVersions ]
@@ -559,7 +582,7 @@ export function CreateSiteForm( {
 					id: 'migration',
 					label: __( 'Migrate from Git (optional)' ),
 					layout: { type: 'card', withHeader: true, isCollapsible: false },
-					children: [ 'fromGit', 'sqlImportPath', 'remoteUploadsUrl' ],
+					children: [ 'fromGit', 'sqlImportFile', 'remoteUploadsUrl' ],
 				},
 			],
 		} ),
@@ -645,7 +668,7 @@ export function CreateSiteForm( {
 			adminPassword: data.adminPassword,
 			adminEmail: data.adminEmail,
 			fromGit: data.fromGit || undefined,
-			sqlImportPath: data.sqlImportPath || undefined,
+			sqlImportFile: data.sqlImportFile,
 			remoteUploadsUrl: data.remoteUploadsUrl || undefined,
 		} );
 	};

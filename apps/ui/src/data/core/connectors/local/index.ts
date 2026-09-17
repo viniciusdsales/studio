@@ -388,7 +388,7 @@ export function createLocalConnector( { apiBaseUrl }: LocalConnectorOptions ): C
 					// the CLI (featured blueprint JSON, or an uploaded bundle's filePath).
 					blueprint: params.blueprint,
 					fromGit: params.fromGit,
-					sqlImportPath: params.sqlImportPath,
+					sqlImportFile: params.sqlImportFile,
 					remoteUploadsUrl: params.remoteUploadsUrl,
 				} ),
 			} );

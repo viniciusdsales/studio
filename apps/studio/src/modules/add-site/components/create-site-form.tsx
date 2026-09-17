@@ -765,8 +765,21 @@ export const CreateSiteForm = ( {
 									<TextControlComponent
 										id="sql-import-path"
 										value={ sqlImportPath }
-										onChange={ setSqlImportPath }
-										placeholder="/path/to/dump.sql"
+										onChange={ () => undefined }
+										placeholder={ __( 'No SQL file selected' ) }
+										readOnly
+									/>
+									<input
+										id="sql-import-file"
+										type="file"
+										accept=".sql,application/sql"
+										onChange={ ( event ) => {
+											const file = event.target.files?.[ 0 ];
+											const filePath = ( file as ( File & { path?: string } ) | undefined )?.path;
+											if ( filePath?.toLowerCase().endsWith( '.sql' ) ) {
+												setSqlImportPath( filePath );
+											}
+										} }
 									/>
 								</div>
 

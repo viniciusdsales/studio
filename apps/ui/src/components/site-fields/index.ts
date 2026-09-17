@@ -251,14 +251,6 @@ export function fromGitField< T extends { fromGit: string } >(): Field< T > {
 	};
 }
 
-export function sqlImportPathField< T extends { sqlImportPath: string } >(): Field< T > {
-	return {
-		id: 'sqlImportPath',
-		type: 'text',
-		label: __( '.sql file to import' ),
-	};
-}
-
 export function remoteUploadsUrlField< T extends { remoteUploadsUrl: string } >(): Field< T > {
 	return {
 		id: 'remoteUploadsUrl',

@@ -389,6 +389,32 @@ describe( 'CreateSiteForm', () => {
 		expect( onSubmit ).toHaveBeenCalledWith( expect.objectContaining( { path: '/sites/manual' } ) );
 	} );
 
+	it( 'selects a SQL file for site creation and ignores unsupported extensions', async () => {
+		const onSubmit = vi.fn();
+		renderForm( { name: 'SQL site' }, onSubmit );
+		openAdvancedSettings();
+
+		const sqlInput = screen.getByLabelText( '.sql file to import' ) as HTMLInputElement;
+		fireEvent.change( sqlInput, {
+			target: { files: [ new File( [ 'CREATE TABLE wp_test;' ], 'database.sql' ) ] },
+		} );
+		expect( screen.getByText( 'database.sql' ) ).toBeInTheDocument();
+
+		fireEvent.change( sqlInput, {
+			target: { files: [ new File( [ 'not sql' ], 'database.txt' ) ] },
+		} );
+		expect( screen.getByText( 'database.sql' ) ).toBeInTheDocument();
+
+		fireEvent.click( screen.getByTestId( 'create-site-submit' ) );
+		await waitFor( () =>
+			expect( onSubmit ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					sqlImportFile: expect.objectContaining( { name: 'database.sql' } ),
+				} )
+			)
+		);
+	} );
+
 	it( 'surfaces path validation and generation errors without leaving the form pending', async () => {
 		usePathValidatorMock.mockReturnValue( {
 			generateProposedPath: vi.fn( async () => ( {
