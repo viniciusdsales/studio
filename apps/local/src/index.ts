@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { createReadStream, createWriteStream, existsSync, mkdtempSync, rm } from 'node:fs';
-import { realpath, rm as rmAsync, stat, writeFile } from 'node:fs/promises';
+import { realpath, rm as rmAsync, stat } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
@@ -859,7 +859,9 @@ export async function startLocalServer( options: LocalServerOptions ): Promise< 
 					bundleUrl?: string;
 				};
 				fromGit?: string;
-				sqlImportFile?: { name: string; contentBase64: string };
+				gitUsername?: string;
+				gitPassword?: string;
+				sqlImportPath?: string;
 				remoteUploadsUrl?: string;
 			};
 			if ( ! body.name || ! body.path ) {
@@ -874,7 +876,6 @@ export async function startLocalServer( options: LocalServerOptions ): Promise< 
 			// like theme zips), download and extract the bundle so the CLI can resolve
 			// relative paths. Mirrors the desktop app's ipc-handlers.ts logic.
 			let bundleTempDir: string | undefined;
-			let sqlImportTempDir: string | undefined;
 			let blueprintFilePath = body.blueprint?.filePath;
 			if ( body.blueprint?.bundleUrl && ! blueprintFilePath ) {
 				const result = await downloadAndExtractBlueprintBundle( body.blueprint.bundleUrl );
@@ -882,15 +883,6 @@ export async function startLocalServer( options: LocalServerOptions ): Promise< 
 				blueprintFilePath = result.blueprintJsonPath;
 			}
 			try {
-				let sqlImportPath: string | undefined;
-				if ( body.sqlImportFile ) {
-					sqlImportTempDir = mkdtempSync( path.join( os.tmpdir(), 'studio-sql-' ) );
-					sqlImportPath = path.join( sqlImportTempDir, path.basename( body.sqlImportFile.name ) );
-					await writeFile(
-						sqlImportPath,
-						Buffer.from( body.sqlImportFile.contentBase64, 'base64' )
-					);
-				}
 				const { args, cleanup } = buildSiteCreateArgs( {
 					path: body.path,
 					name: body.name,
@@ -906,12 +898,18 @@ export async function startLocalServer( options: LocalServerOptions ): Promise< 
 					blueprint: body.blueprint?.blueprint,
 					originalBlueprintPath: blueprintFilePath,
 					fromGit: body.fromGit,
-					sqlImportPath,
+					sqlImportPath: body.sqlImportPath,
 					remoteUploadsUrl: body.remoteUploadsUrl,
 				} );
 				cleanupCreateArgs = cleanup;
 				await new Promise< void >( ( resolve, reject ) => {
-					const [ emitter ] = execute( args, { output: 'capture' } );
+					const [ emitter ] = execute( args, {
+						output: 'capture',
+						env: {
+							STUDIO_GIT_USERNAME: body.gitUsername,
+							STUDIO_GIT_PASSWORD: body.gitPassword,
+						},
+					} );
 					emitter.on( 'success', () => resolve() );
 					emitter.on( 'failure', ( { error } ) => reject( error ) );
 					emitter.on( 'error', ( { error } ) => reject( error ) );
@@ -926,10 +924,14 @@ export async function startLocalServer( options: LocalServerOptions ): Promise< 
 				if ( bundleTempDir ) {
 					await cleanupBlueprintTempDir( bundleTempDir ).catch( () => undefined );
 				}
-				if ( sqlImportTempDir ) {
-					await rmAsync( sqlImportTempDir, { recursive: true, force: true } ).catch(
-						() => undefined
-					);
+				if ( body.sqlImportPath ) {
+					const upload = uploads.get( body.sqlImportPath );
+					if ( upload ) {
+						uploads.delete( body.sqlImportPath );
+						await rmAsync( upload.directory, { recursive: true, force: true } ).catch(
+							() => undefined
+						);
+					}
 				}
 			}
 

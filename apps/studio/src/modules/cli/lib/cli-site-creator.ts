@@ -31,7 +31,14 @@ export async function createSiteViaCli( options: CreateSiteOptions ): Promise< C
 
 	return new Promise( ( resolve, reject ) => {
 		const result: Partial< CreateSiteResult > = {};
-		const [ emitter ] = executeCliCommand( args, { output: 'capture', logPrefix: siteId } );
+		const [ emitter ] = executeCliCommand( args, {
+			output: 'capture',
+			logPrefix: siteId,
+			env: {
+				STUDIO_GIT_USERNAME: options.gitUsername,
+				STUDIO_GIT_PASSWORD: options.gitPassword,
+			},
+		} );
 
 		emitter.on( 'data', ( { data } ) => {
 			const parsed = cliEventSchema.safeParse( data );

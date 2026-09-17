@@ -32,6 +32,8 @@ export interface SiteCreateOptions {
 	flowType?: TracksSiteCreateFlowType;
 	// Git repository to clone into the site directory before creating the site.
 	fromGit?: string;
+	gitUsername?: string;
+	gitPassword?: string;
 	// Path to a .sql file imported after the server starts.
 	sqlImportPath?: string;
 	// Production URL used as a fallback for wp-content/uploads files missing locally.

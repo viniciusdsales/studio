@@ -715,8 +715,10 @@ export interface CreateSiteParams {
 	flowType?: TracksSiteCreateFlowType;
 	// Git repository to clone into the site directory before creating the site.
 	fromGit?: string;
+	gitUsername?: string;
+	gitPassword?: string;
 	// The selected SQL file is uploaded by the local connector before creation.
-	sqlImportFile?: File | { name: string; contentBase64: string } | null;
+	sqlImportFile?: File | null;
 	// Production URL used as a fallback for wp-content/uploads files missing locally.
 	remoteUploadsUrl?: string;
 }

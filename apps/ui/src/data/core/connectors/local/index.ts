@@ -371,6 +371,21 @@ export function createLocalConnector( { apiBaseUrl }: LocalConnectorOptions ): C
 
 		// Site creation — delegated to the CLI `create` on the local machine.
 		async createSite( params ): Promise< SiteDetails > {
+			let sqlImportPath: string | undefined;
+			if ( params.sqlImportFile ) {
+				const uploadResponse = await fetch(
+					`${ base }/uploads?name=${ encodeURIComponent( params.sqlImportFile.name ) }`,
+					{
+						method: 'POST',
+						headers: { 'Content-Type': 'application/octet-stream' },
+						body: params.sqlImportFile,
+					}
+				);
+				if ( ! uploadResponse.ok ) {
+					throw new Error( `POST /uploads failed (${ uploadResponse.status })` );
+				}
+				sqlImportPath = ( ( await uploadResponse.json() ) as { path: string } ).path;
+			}
 			return api< SiteDetails >( '/sites', {
 				method: 'POST',
 				body: JSON.stringify( {
@@ -388,7 +403,9 @@ export function createLocalConnector( { apiBaseUrl }: LocalConnectorOptions ): C
 					// the CLI (featured blueprint JSON, or an uploaded bundle's filePath).
 					blueprint: params.blueprint,
 					fromGit: params.fromGit,
-					sqlImportFile: params.sqlImportFile,
+					gitUsername: params.gitUsername,
+					gitPassword: params.gitPassword,
+					sqlImportPath,
 					remoteUploadsUrl: params.remoteUploadsUrl,
 				} ),
 			} );

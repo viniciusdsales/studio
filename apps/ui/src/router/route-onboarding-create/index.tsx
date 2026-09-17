@@ -51,15 +51,6 @@ function getSourceIdentifier( source: string ): string {
 	}
 }
 
-function encodeFileAsBase64( bytes: Uint8Array ): string {
-	let binary = '';
-	const chunkSize = 0x8000;
-	for ( let index = 0; index < bytes.length; index += chunkSize ) {
-		binary += String.fromCharCode( ...bytes.subarray( index, index + chunkSize ) );
-	}
-	return btoa( binary );
-}
-
 interface BlueprintPackage {
 	name: string;
 	url?: string;
@@ -306,14 +297,6 @@ export function CreateSitePage() {
 		transferredTempDirRef.current = blueprint?.tempDir ?? null;
 
 		try {
-			const sqlImportFile = values.sqlImportFile
-				? {
-						name: values.sqlImportFile.name,
-						contentBase64: encodeFileAsBase64(
-							new Uint8Array( await values.sqlImportFile.arrayBuffer() )
-						),
-				  }
-				: undefined;
 			const mergedBlueprint = blueprint
 				? updateBlueprintWithFormValues( blueprint.blueprint, {
 						phpVersion: values.phpVersion,
@@ -336,7 +319,7 @@ export function CreateSitePage() {
 				adminPassword: values.adminPassword || undefined,
 				adminEmail: values.adminEmail || undefined,
 				fromGit: values.fromGit,
-				sqlImportFile,
+				sqlImportFile: values.sqlImportFile,
 				remoteUploadsUrl: values.remoteUploadsUrl,
 				...( brief ? { flowType: 'ai' as const } : {} ),
 				...( mergedBlueprint && blueprint

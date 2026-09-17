@@ -166,9 +166,31 @@ export type CreateCommandOptions = {
 // exactly as it would from a manual `git clone`.
 function cloneGitRepository( repositoryUrl: string, destination: string ): Promise< void > {
 	return new Promise( ( resolve, reject ) => {
-		const child = spawn( 'git', [ 'clone', repositoryUrl, destination ], { stdio: 'inherit' } );
+		const gitUsername = process.env.STUDIO_GIT_USERNAME;
+		const gitPassword = process.env.STUDIO_GIT_PASSWORD;
+		const askpassPath = path.join( os.tmpdir(), `studio-git-askpass-${ crypto.randomUUID() }.sh` );
+		if ( gitUsername && gitPassword ) {
+			fs.writeFileSync(
+				askpassPath,
+				'#!/bin/sh\ncase "$1" in *Username*) printf "%s" "$STUDIO_GIT_USERNAME" ;; *) printf "%s" "$STUDIO_GIT_PASSWORD" ;; esac\n'
+			);
+			fs.chmodSync( askpassPath, 0o700 );
+		}
+		const child = spawn( 'git', [ 'clone', repositoryUrl, destination ], {
+			stdio: 'inherit',
+			env: {
+				...process.env,
+				...( gitUsername && gitPassword
+					? { GIT_ASKPASS: askpassPath, GIT_TERMINAL_PROMPT: '0' }
+					: {} ),
+			},
+		} );
+		const cleanup = () => {
+			if ( gitUsername && gitPassword ) fs.rmSync( askpassPath, { force: true } );
+		};
 		child.on( 'error', reject );
 		child.on( 'exit', ( code ) => {
+			cleanup();
 			if ( code === 0 ) {
 				resolve();
 			} else {

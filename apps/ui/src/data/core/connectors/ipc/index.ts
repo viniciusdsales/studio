@@ -292,6 +292,8 @@ export function createIpcConnector(): Connector {
 				blueprint,
 				flowType,
 				fromGit,
+				gitUsername,
+				gitPassword,
 				sqlImportFile,
 				remoteUploadsUrl,
 			} = params;
@@ -315,6 +317,8 @@ export function createIpcConnector(): Connector {
 					: undefined,
 				flowType,
 				fromGit,
+				gitUsername,
+				gitPassword,
 				sqlImportPath: sqlImportFile
 					? ( sqlImportFile as File & { path?: string } ).path
 					: undefined,
