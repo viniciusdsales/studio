@@ -125,6 +125,8 @@ export const CreateSiteForm = ( {
 	);
 	const [ adminEmail, setAdminEmail ] = useState( 'admin@localhost.com' );
 	const [ fromGit, setFromGit ] = useState( '' );
+	const [ gitUsername, setGitUsername ] = useState( '' );
+	const [ gitPassword, setGitPassword ] = useState( '' );
 	const [ sqlImportPath, setSqlImportPath ] = useState( '' );
 	const [ remoteUploadsUrl, setRemoteUploadsUrl ] = useState( '' );
 
@@ -356,6 +358,8 @@ export const CreateSiteForm = ( {
 			adminPassword: adminPassword || undefined,
 			adminEmail,
 			fromGit: fromGit || undefined,
+			gitUsername: gitUsername || undefined,
+			gitPassword: gitPassword || undefined,
 			sqlImportPath: sqlImportPath || undefined,
 			remoteUploadsUrl: remoteUploadsUrl || undefined,
 		} ),
@@ -373,6 +377,8 @@ export const CreateSiteForm = ( {
 			adminPassword,
 			adminEmail,
 			fromGit,
+			gitUsername,
+			gitPassword,
 			sqlImportPath,
 			remoteUploadsUrl,
 		]
@@ -756,6 +762,19 @@ export const CreateSiteForm = ( {
 											'Cloned into the site directory before creation. You may be prompted for Git credentials.'
 										) }
 									</span>
+								</div>
+								<div className="grid grid-cols-2 gap-4 mt-2">
+									<TextControlComponent
+										id="git-username"
+										label={ __( 'Git username' ) }
+										value={ gitUsername }
+										onChange={ setGitUsername }
+									/>
+									<PasswordControl
+										id="git-password"
+										value={ gitPassword }
+										onChange={ setGitPassword }
+									/>
 								</div>
 
 								<div className="flex flex-col gap-1.5 leading-4 mt-2">

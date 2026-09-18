@@ -319,6 +319,8 @@ export function CreateSitePage() {
 				adminPassword: values.adminPassword || undefined,
 				adminEmail: values.adminEmail || undefined,
 				fromGit: values.fromGit,
+				gitUsername: values.gitUsername,
+				gitPassword: values.gitPassword,
 				sqlImportFile: values.sqlImportFile,
 				remoteUploadsUrl: values.remoteUploadsUrl,
 				...( brief ? { flowType: 'ai' as const } : {} ),

@@ -815,6 +815,8 @@ export async function createSite(
 		noStart?: boolean;
 		flowType?: TracksSiteCreateFlowType;
 		fromGit?: string;
+		gitUsername?: string;
+		gitPassword?: string;
 		sqlImportPath?: string;
 		remoteUploadsUrl?: string;
 	} = {}
@@ -835,6 +837,8 @@ export async function createSite(
 		noStart = false,
 		flowType,
 		fromGit,
+		gitUsername,
+		gitPassword,
 		sqlImportPath,
 		remoteUploadsUrl,
 	} = config;
@@ -874,6 +878,8 @@ export async function createSite(
 				noStart,
 				flowType,
 				fromGit,
+				gitUsername,
+				gitPassword,
 				sqlImportPath,
 				remoteUploadsUrl,
 			},

@@ -1073,7 +1073,10 @@ describe( 'CLI: studio create', () => {
 			expect( spawn ).toHaveBeenCalledWith(
 				'git',
 				[ 'clone', 'git@example.com:acme/site.git', mockSitePath ],
-				{ stdio: 'inherit' }
+				expect.objectContaining( {
+					stdio: 'inherit',
+					env: expect.any( Object ),
+				} )
 			);
 			expect( saveCliConfig ).toHaveBeenCalled();
 		} );

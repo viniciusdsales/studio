@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { confirm, input, password, select } from '@inquirer/prompts';
 import { DEFAULT_WORDPRESS_VERSION } from '@studio/common/constants';

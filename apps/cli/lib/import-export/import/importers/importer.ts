@@ -100,6 +100,7 @@ abstract class BaseImporter extends ImportExportEventEmitter implements Importer
 			const sqlTempFile = `${ generateBackupFilename( 'sql' ) }.sql`;
 			const tmpPath = path.join( site.path, sqlTempFile );
 			processedFiles++;
+			let importSucceeded = false;
 
 			this.emit( ImportEvents.IMPORT_DATABASE_PROGRESS, {
 				currentFile: path.basename( sqlFile ),
@@ -124,6 +125,7 @@ abstract class BaseImporter extends ImportExportEventEmitter implements Importer
 					{
 						requireSqliteCliCommand: true,
 						phpVersion: this.resolvePhpVersion( site ),
+						liveOutput: true,
 					}
 				);
 
@@ -141,8 +143,11 @@ abstract class BaseImporter extends ImportExportEventEmitter implements Importer
 						'database_import'
 					);
 				}
+				importSucceeded = true;
 			} finally {
-				await this.safelyDeletePath( tmpPath );
+				if ( importSucceeded ) {
+					await this.safelyDeletePath( tmpPath );
+				}
 			}
 		}
 

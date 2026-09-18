@@ -55,6 +55,8 @@ export interface CreateSiteFormValues {
 	adminPassword: string;
 	adminEmail: string;
 	fromGit?: string;
+	gitUsername?: string;
+	gitPassword?: string;
 	sqlImportFile?: File | null;
 	remoteUploadsUrl?: string;
 }
@@ -99,6 +101,8 @@ interface FormData {
 	adminPassword: string;
 	adminEmail: string;
 	fromGit: string;
+	gitUsername: string;
+	gitPassword: string;
 	sqlImportFile: File | null;
 	remoteUploadsUrl: string;
 }
@@ -112,6 +116,8 @@ const SIMPLE_FIELDS = [
 	'adminPassword',
 	'adminEmail',
 	'fromGit',
+	'gitUsername',
+	'gitPassword',
 	'sqlImportFile',
 	'remoteUploadsUrl',
 ] as const satisfies readonly ( keyof CreateSiteFormValues )[];
@@ -133,6 +139,8 @@ function createDefaultFormData(): FormData {
 		adminPassword: generatePassword(),
 		adminEmail: DEFAULT_ADMIN_EMAIL,
 		fromGit: '',
+		gitUsername: '',
+		gitPassword: '',
 		sqlImportFile: null,
 		remoteUploadsUrl: '',
 	};
@@ -175,6 +183,8 @@ function applyInitialValues(
 		adminPassword: { adminPassword: defaults.adminPassword },
 		adminEmail: { adminEmail: defaults.adminEmail },
 		fromGit: { fromGit: defaults.fromGit },
+		gitUsername: { gitUsername: defaults.gitUsername },
+		gitPassword: { gitPassword: defaults.gitPassword },
 		sqlImportFile: { sqlImportFile: defaults.sqlImportFile },
 		remoteUploadsUrl: { remoteUploadsUrl: defaults.remoteUploadsUrl },
 	};
@@ -530,6 +540,8 @@ export function CreateSiteForm( {
 				Edit: EnableHttpsControl,
 			},
 			fromGitField< FormData >(),
+			{ id: 'gitUsername', type: 'text', label: __( 'Git username' ) },
+			{ id: 'gitPassword', type: 'password', label: __( 'Git token or password' ) },
 			{
 				id: 'sqlImportFile',
 				label: __( '.sql file to import' ),
@@ -582,7 +594,13 @@ export function CreateSiteForm( {
 					id: 'migration',
 					label: __( 'Migrate from Git (optional)' ),
 					layout: { type: 'card', withHeader: true, isCollapsible: false },
-					children: [ 'fromGit', 'sqlImportFile', 'remoteUploadsUrl' ],
+					children: [
+						'fromGit',
+						'gitUsername',
+						'gitPassword',
+						'sqlImportFile',
+						'remoteUploadsUrl',
+					],
 				},
 			],
 		} ),
@@ -668,6 +686,8 @@ export function CreateSiteForm( {
 			adminPassword: data.adminPassword,
 			adminEmail: data.adminEmail,
 			fromGit: data.fromGit || undefined,
+			gitUsername: data.gitUsername || undefined,
+			gitPassword: data.gitPassword || undefined,
 			sqlImportFile: data.sqlImportFile,
 			remoteUploadsUrl: data.remoteUploadsUrl || undefined,
 		} );

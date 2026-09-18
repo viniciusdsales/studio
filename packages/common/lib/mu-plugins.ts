@@ -6,6 +6,7 @@
  */
 
 import { copyFile, mkdir, mkdtemp, readdir, readFile, unlink, writeFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 
@@ -766,7 +767,27 @@ export async function writeStudioMuPluginsForNativePhpRuntime(
 	// the user's mu-plugins/ nearly empty.
 	const [ tmpMuPluginsDir, loaderHostPath ] = await getMuPlugins( options );
 	await copyFile( loaderHostPath, loaderPath );
+	await excludeStudioLoaderFromGit( siteFolder );
 	return tmpMuPluginsDir;
+}
+
+async function excludeStudioLoaderFromGit( siteFolder: string ): Promise< void > {
+	const excludePath = path.join( siteFolder, '.git', 'info', 'exclude' );
+	if ( ! existsSync( path.join( siteFolder, '.git' ) ) ) {
+		return;
+	}
+
+	const marker = '# Studio-managed files';
+	const existing = existsSync( excludePath ) ? await readFile( excludePath, 'utf8' ) : '';
+	if ( existing.includes( 'wp-content/mu-plugins/99-studio-loader.php' ) ) {
+		return;
+	}
+
+	await mkdir( path.dirname( excludePath ), { recursive: true } );
+	await writeFile(
+		excludePath,
+		`${ existing.trimEnd() }\n\n${ marker }\n/wp-content/mu-plugins/99-studio-loader.php\n`
+	);
 }
 
 /**

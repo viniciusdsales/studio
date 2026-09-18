@@ -43,6 +43,8 @@ export interface CreateSiteFormValues {
 	adminEmail?: string;
 	// Git repository to clone into the site directory before creating the site.
 	fromGit?: string;
+	gitUsername?: string;
+	gitPassword?: string;
 	// Path to a .sql file imported after the server starts.
 	sqlImportPath?: string;
 	// Production URL used as a fallback for wp-content/uploads files missing locally.
@@ -249,6 +251,8 @@ export function useAddSite() {
 					formValues.fileAccess,
 					flowType,
 					formValues.fromGit,
+					formValues.gitUsername,
+					formValues.gitPassword,
 					formValues.sqlImportPath,
 					formValues.remoteUploadsUrl
 				);

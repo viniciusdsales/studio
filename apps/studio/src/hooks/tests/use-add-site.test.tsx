@@ -178,6 +178,8 @@ describe( 'useAddSite', () => {
 			undefined, // fileAccess
 			undefined, // flowType
 			undefined, // fromGit
+			undefined, // gitUsername
+			undefined, // gitPassword
 			undefined, // sqlImportPath
 			undefined // remoteUploadsUrl
 		);

@@ -303,6 +303,13 @@ export async function runCommand(
 			logger.reportSuccess( __( 'WordPress files copied' ) );
 		}
 
+		logger.reportStart(
+			LoggerAction.INSTALL_SQLITE,
+			__( 'Setting up SQLite integration before import…' )
+		);
+		await keepSqliteIntegrationUpdated( site.path );
+		logger.reportSuccess( __( 'SQLite integration ready' ) );
+
 		logger.reportStart( LoggerAction.IMPORT_SITE, __( 'Starting import…' ) );
 
 		const importer = getImporter(

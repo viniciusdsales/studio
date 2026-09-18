@@ -192,7 +192,9 @@ describe( 'CLI: studio import', () => {
 				throw new Error( 'import failed' );
 			} ) as never
 		);
-		vi.mocked( keepSqliteIntegrationUpdated ).mockRejectedValue( new Error( 'restart failed' ) );
+		vi.mocked( keepSqliteIntegrationUpdated )
+			.mockResolvedValueOnce( undefined )
+			.mockRejectedValue( new Error( 'restart failed' ) );
 
 		await expect( runCommand( testSitePath, testImportPath ) ).rejects.toThrow( 'import failed' );
 		expect( stopWordPressServer ).toHaveBeenCalledWith( testSite.id );
@@ -209,7 +211,9 @@ describe( 'CLI: studio import', () => {
 				);
 			} ) as never
 		);
-		vi.mocked( keepSqliteIntegrationUpdated ).mockRejectedValue( new Error( 'restart failed' ) );
+		vi.mocked( keepSqliteIntegrationUpdated )
+			.mockResolvedValueOnce( undefined )
+			.mockRejectedValue( new Error( 'restart failed' ) );
 
 		await expect( runCommand( testSitePath, testImportPath ) ).rejects.toThrow(
 			'Failed to extract backup: unexpected end of file'
@@ -296,7 +300,9 @@ describe( 'CLI: studio import', () => {
 				throw new LoggerError( 'Database import failed: x', undefined, 'database_import' );
 			} ) as never
 		);
-		vi.mocked( keepSqliteIntegrationUpdated ).mockRejectedValue( new Error( 'restart failed' ) );
+		vi.mocked( keepSqliteIntegrationUpdated )
+			.mockResolvedValueOnce( undefined )
+			.mockRejectedValue( new Error( 'restart failed' ) );
 
 		await expect( runCommand( testSitePath, testImportPath ) ).rejects.toThrow(
 			'Database import failed'

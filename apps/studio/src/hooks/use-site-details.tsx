@@ -44,6 +44,8 @@ interface SiteDetailsContext {
 		fileAccess?: SiteFileAccess,
 		flowType?: TracksSiteCreateFlowType,
 		fromGit?: string,
+		gitUsername?: string,
+		gitPassword?: string,
 		sqlImportPath?: string,
 		remoteUploadsUrl?: string
 	) => Promise< SiteDetails | void >;
@@ -324,6 +326,8 @@ export function SiteDetailsProvider( { children }: SiteDetailsProviderProps ) {
 			fileAccess?: SiteFileAccess,
 			flowType?: TracksSiteCreateFlowType,
 			fromGit?: string,
+			gitUsername?: string,
+			gitPassword?: string,
 			sqlImportPath?: string,
 			remoteUploadsUrl?: string
 		) => {
@@ -407,6 +411,8 @@ export function SiteDetailsProvider( { children }: SiteDetailsProviderProps ) {
 					noStart,
 					flowType,
 					fromGit,
+					gitUsername,
+					gitPassword,
 					sqlImportPath,
 					remoteUploadsUrl,
 				} );
